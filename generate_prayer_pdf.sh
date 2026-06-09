@@ -6,7 +6,7 @@ usage() {
 Usage: ./generate_prayer_pdf.sh <month_number>
 
 Arguments:
-  month_number   IslamicFinder month number from the URL (0-11)
+  month_number   Gregorian month number (1-12)
 
 Environment variables:
   YEAR           Year to use in the IslamicFinder URL (defaults to 2026)
@@ -29,8 +29,8 @@ if [[ $# -ne 1 ]]; then
 fi
 
 MONTH_INDEX="$1"
-if ! [[ "$MONTH_INDEX" =~ ^[0-9]+$ ]] || (( MONTH_INDEX < 0 || MONTH_INDEX > 11 )); then
-  echo "Error: month_number must be an integer from 0 to 11 (same as IslamicFinder URL)." >&2
+if ! [[ "$MONTH_INDEX" =~ ^[0-9]+$ ]] || (( MONTH_INDEX < 1 || MONTH_INDEX > 12 )); then
+  echo "Error: month_number must be an integer from 1 to 12." >&2
   exit 1
 fi
 
@@ -53,7 +53,8 @@ if ! command -v pdflatex >/dev/null 2>&1; then
 fi
 
 YEAR="${YEAR:-2026}"
-GREG_MONTH=$((MONTH_INDEX + 1))
+GREG_MONTH=$MONTH_INDEX
+URL_MONTH_INDEX=$((MONTH_INDEX - 1))
 MONTH_PADDED=$(printf '%02d' "$GREG_MONTH")
 OUTPUT_FILE="prayer-schedule-${YEAR}-${MONTH_PADDED}.pdf"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -62,7 +63,7 @@ LOGO_PATH="${LOGO_PATH:-$SCRIPT_DIR/MCO-Logo-Color.png}"
 if [[ -n "${CITY_URL:-}" ]]; then
   URL="$CITY_URL"
 else
-  URL="https://www.islamicfinder.org/prayer-times/printmonthlyprayer/?timeInterval=month&month=${MONTH_INDEX}&year=${YEAR}&calendarType=Gregorian"
+  URL="https://www.islamicfinder.org/prayer-times/printmonthlyprayer/?timeInterval=month&month=${URL_MONTH_INDEX}&year=${YEAR}&calendarType=Gregorian"
 fi
 
 echo "Fetching prayer data from: $URL"
@@ -223,8 +224,10 @@ minus_three_minutes() {
 
 if [[ -n "$LOGO_TEX" ]]; then
   LOGO_LATEX="\\includegraphics[width=0.95\\linewidth]{$LOGO_TEX}"
+  WATERMARK_LATEX="\\AddToShipoutPictureBG*{\\begin{tikzpicture}[remember picture,overlay]\\node[opacity=0.14] at (current page.center) {\\includegraphics[width=0.62\\paperwidth]{$LOGO_TEX}};\\end{tikzpicture}}"
 else
   LOGO_LATEX="\\rule{1.2in}{0.55in}"
+  WATERMARK_LATEX=""
 fi
 
 {
@@ -233,6 +236,8 @@ fi
 \usepackage[margin=0.22in]{geometry}
 \\usepackage[table]{xcolor}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{eso-pic}
 \\usepackage{array}
 \\usepackage{helvet}
 \\renewcommand{\\familydefault}{\\sfdefault}
@@ -245,6 +250,7 @@ fi
 \\definecolor{gridgreen}{HTML}{1A8F43}
 \\arrayrulecolor{gridgreen}
 \\begin{document}
+${WATERMARK_LATEX}
 \noindent
 \begin{minipage}[c]{0.18\textwidth}
 \centering
