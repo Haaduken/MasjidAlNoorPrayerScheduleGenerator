@@ -3,18 +3,18 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: ./generate_prayer_pdf.sh <month_number>
+Usage: ./generate_prayer_pdf.sh <month_number> [year]
 
 Arguments:
   month_number   Gregorian month number (1-12)
+  year           Optional 4-digit year (defaults to current year)
 
 Environment variables:
-  YEAR           Year to use in the IslamicFinder URL (defaults to 2026)
   CITY_URL       Full IslamicFinder print URL to use instead of generated URL
 
 Example:
   ./generate_prayer_pdf.sh 5
-  YEAR=2026 ./generate_prayer_pdf.sh 5
+  ./generate_prayer_pdf.sh 5 2026
 EOF
 }
 
@@ -23,7 +23,7 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   exit 0
 fi
 
-if [[ $# -ne 1 ]]; then
+if (( $# < 1 || $# > 2 )); then
   usage
   exit 1
 fi
@@ -31,6 +31,12 @@ fi
 MONTH_INDEX="$1"
 if ! [[ "$MONTH_INDEX" =~ ^[0-9]+$ ]] || (( MONTH_INDEX < 1 || MONTH_INDEX > 12 )); then
   echo "Error: month_number must be an integer from 1 to 12." >&2
+  exit 1
+fi
+
+YEAR="${2:-$(date +%Y)}"
+if ! [[ "$YEAR" =~ ^[0-9]{4}$ ]]; then
+  echo "Error: year must be a 4-digit number (e.g. 2026)." >&2
   exit 1
 fi
 
@@ -52,7 +58,6 @@ if ! command -v pdflatex >/dev/null 2>&1; then
   exit 1
 fi
 
-YEAR="${YEAR:-2026}"
 GREG_MONTH=$MONTH_INDEX
 URL_MONTH_INDEX=$((MONTH_INDEX - 1))
 MONTH_PADDED=$(printf '%02d' "$GREG_MONTH")
