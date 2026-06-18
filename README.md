@@ -17,3 +17,19 @@ As an example, if you want to generate the schedule for the month of June
 To generate June for a specific year:
 
 `./generate_prayer_pdf.sh 6 2000`
+
+---
+
+Hijri month usage
+
+`./generate_prayer_pdf_hijri.sh <hijriMonthNumber> [hijriYear]`
+
+Where hijriMonthNumber is required and hijriYear is optional.
+
+As an example, if you want to generate the schedule for Ramadan (month 9):
+
+`./generate_prayer_pdf_hijri.sh 9`
+
+To generate Ramadan for a specific Hijri year:
+
+`./generate_prayer_pdf_hijri.sh 9 1447`
